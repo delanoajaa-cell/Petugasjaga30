@@ -2,159 +2,186 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Portal Petugas Jaga OSIS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Kustom scrollbar lembut untuk HP */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen p-3 md:p-6 pb-12">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-28 sm:pb-12">
 
-  <div class="max-w-2xl mx-auto space-y-3.5">
-    
-    <!-- HEADER RESMI OSIS -->
-    <header class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">OSIS</span>
-          <span class="text-xs text-slate-500 font-medium">Divisi Ketertiban & Keamanan</span>
-        </div>
-        <h1 class="text-lg md:text-xl font-bold tracking-tight text-slate-800">Sistem Penjadwalan Petugas Jaga</h1>
-      </div>
-
-      <div class="flex items-center gap-2 self-start sm:self-auto bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="text-slate-600 font-medium" id="syncStatus">Otomatis Terhubung</span>
-      </div>
-    </header>
-
-    <!-- PENGATURAN TUGAS -->
-    <section class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm space-y-3.5">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Tanggal Jaga</label>
-          <input type="date" id="dutyDate" class="w-full text-xs font-medium border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition" onchange="handleDateChange()">
+  <!-- TOP APP BAR (MOBILE HEADER) -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-xs">
+    <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+          <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Format Nama</label>
-          <select id="nameType" class="w-full text-xs font-medium border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition">
+          <h1 class="text-xs font-bold text-slate-900 leading-tight">Petugas Jaga OSIS</h1>
+          <p class="text-[10px] text-slate-500 font-medium">Ketertiban & Keamanan</p>
+        </div>
+      </div>
+      
+      <!-- STATUS SYNC MINI -->
+      <div class="flex items-center gap-1.5 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-full text-[10px] font-medium text-slate-600">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="hidden xs:inline">Sinkron</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KONTEN UTAMA -->
+  <main class="max-w-xl mx-auto p-3.5 space-y-3">
+
+    <!-- CARD FORM PENGATURAN -->
+    <section class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200 space-y-3">
+      <div class="grid grid-cols-2 gap-2.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Tanggal</label>
+          <input type="date" id="dutyDate" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition" onchange="handleDateChange()">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Format Nama</label>
+          <select id="nameType" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
             <option value="call">Nama Panggilan</option>
             <option value="full">Nama Lengkap</option>
           </select>
         </div>
       </div>
 
-      <!-- KETERANGAN HARI JUMAT / NORMAL -->
-      <div id="fridayNotice" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-xs text-emerald-900 flex items-center gap-2">
-        <i class="fa-solid fa-calendar-check text-emerald-600"></i>
-        <span>Hari <strong>Jumat</strong> terdeteksi: Jadwal Ishoma ditiadakan otomatis.</span>
+      <!-- BADGE INFO HARI JUMAT -->
+      <div id="fridayNotice" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-[11px] text-emerald-800 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-xs"></i>
+        <span>Hari <strong>Jumat</strong>: Pos Ishoma otomatis ditiadakan.</span>
       </div>
 
-      <!-- INFO PETUGAS SEBELUMNYA (YANG SEDANG LIBUR) -->
-      <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 flex items-start gap-2.5">
-        <i class="fa-solid fa-circle-info text-blue-600 mt-0.5"></i>
-        <div class="flex-1">
-          <div class="font-bold mb-0.5">Riwayat Terakhir: <span id="prevDutyDate" class="font-normal text-blue-800">Memeriksa data...</span></div>
-          <div class="text-[11px] text-blue-800/90 leading-relaxed" id="prevDutyDesc">
-            Petugas yang kemarin bertugas jaga otomatis diistirahatkan hari ini agar adil bergantian.
-          </div>
+      <!-- BANNER PETUGAS SEBELUMNYA -->
+      <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-3 text-[11px] text-blue-950 space-y-1">
+        <div class="flex items-center justify-between font-bold text-blue-900">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Terakhir Jaga:</span>
+          <span id="prevDutyDate" class="font-semibold text-blue-700">Mengecek data...</span>
         </div>
+        <p id="prevDutyDesc" class="text-blue-800/80 text-[10.5px] leading-relaxed">
+          Petugas yang kemarin bertugas otomatis diistirahatkan hari ini agar adil bergantian.
+        </p>
       </div>
 
-      <!-- KONTROL UTAMA -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
-        <button onclick="generateSchedule()" class="col-span-2 sm:col-span-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md shadow-blue-500/20 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-arrows-rotate"></i> Buat Jadwal Baru
+      <!-- QUICK MENU PILLS -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="toggleAttendanceModal()" class="w-full bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-200/90 transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-user-xmark text-slate-400"></i> Presensi / Izin
         </button>
-        <button onclick="toggleAttendanceModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-user-xmark text-slate-500"></i> Absen / Izin
-        </button>
-        <button onclick="toggleStatsModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-list-check text-slate-500"></i> Cek Giliran
+        <button onclick="toggleStatsModal()" class="w-full bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs border border-slate-200/90 transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-chart-simple text-slate-400"></i> Cek Rotasi
         </button>
       </div>
     </section>
 
-    <!-- HASIL OUTPUT FORMAT WHATSAPP -->
-    <section class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm space-y-3">
+    <!-- CARD HASIL DRAFT WHATSAPP -->
+    <section class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200 space-y-2.5">
       <div class="flex items-center justify-between pb-1 border-b border-slate-100">
         <div>
-          <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Format Chat WhatsApp</span>
-          <p class="text-[11px] text-slate-400">Langsung tersimpan dan siap dibagikan.</p>
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Draft Pesan WhatsApp</span>
+          <p class="text-[10px] text-slate-400">Jadwal langsung tersimpan & otomatis tersinkron.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="copyWebLink()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-1.5 px-3 rounded-xl border border-slate-200 transition cursor-pointer flex items-center gap-1" title="Kirim link terupdate ini ke sesama tim keamanan">
-            <i class="fa-solid fa-share-nodes text-slate-500"></i> Bagikan Link
-          </button>
-          <button onclick="copyToClipboard()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1.5 px-3.5 rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm">
-            <i class="fa-regular fa-copy"></i> Salin Pesan
-          </button>
-        </div>
+        <button onclick="copyWebLink()" class="text-blue-600 hover:text-blue-700 active:scale-95 text-xs font-bold flex items-center gap-1 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 cursor-pointer">
+          <i class="fa-solid fa-share-nodes text-[11px]"></i> Bagikan
+        </button>
       </div>
 
-      <textarea id="outputResult" rows="21" class="w-full font-mono text-xs md:text-sm p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-slate-800 leading-relaxed" readonly placeholder="Klik 'Buat Jadwal Baru' untuk menghasilkan jadwal..."></textarea>
+      <textarea id="outputResult" rows="16" class="w-full font-mono text-[11.5px] p-3 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none text-slate-800 leading-relaxed resize-y select-all" readonly placeholder="Klik 'Buat Jadwal Baru' di bawah..."></textarea>
     </section>
 
-  </div>
+  </main>
 
-  <!-- MODAL: KELOLA ABSEN / IZIN -->
-  <div id="attendanceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white w-full max-w-lg rounded-2xl p-5 shadow-2xl max-h-[85vh] flex flex-col border border-slate-200">
-      <div class="flex justify-between items-center pb-3 border-b">
+  <!-- BOTTOM FLOATING ACTION BAR (KHUSUS MOBILE AGAR MUDAH DITEKAN JEMPOL) -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-2.5 shadow-lg">
+    <div class="max-w-xl mx-auto flex items-center gap-2">
+      <button onclick="generateSchedule()" class="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold py-3 px-3 rounded-xl text-xs shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-arrows-rotate text-sm"></i>
+        <span>Buat Jadwal Baru</span>
+      </button>
+
+      <button onclick="copyToClipboard()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold py-3 px-3 rounded-xl text-xs shadow-md shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+        <i class="fa-regular fa-copy text-sm"></i>
+        <span>Salin Pesan WA</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL BOTTOM-SHEET: PRESENSI / IZIN -->
+  <div id="attendanceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl max-h-[85vh] flex flex-col border border-slate-200 animate-in slide-in-from-bottom duration-200">
+      
+      <!-- SHEET DRAG INDICATOR FOR MOBILE -->
+      <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden"></div>
+
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
         <div>
-          <h3 class="font-bold text-sm text-slate-800">Presensi Anggota</h3>
-          <p class="text-[11px] text-slate-500">Hilangkan centang jika anggota berhalangan hadir atau sakit.</p>
+          <h3 class="font-bold text-sm text-slate-900">Daftar Kehadiran Anggota</h3>
+          <p class="text-[10.5px] text-slate-500">Hilangkan centang jika anggota sedang izin atau sakit.</p>
         </div>
-        <button onclick="toggleAttendanceModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+        <button onclick="toggleAttendanceModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none p-1">&times;</button>
       </div>
       
       <div class="overflow-y-auto py-3 space-y-4 flex-1 text-xs">
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <h4 class="font-bold text-amber-700 uppercase tracking-wide">Tim Koordinator HT (6 Orang)</h4>
+            <h4 class="font-bold text-amber-800 text-[11px] uppercase tracking-wide">Calon Koordinator HT (6 Orang)</h4>
           </div>
-          <div id="listHTCandidates" class="grid grid-cols-2 gap-1.5 bg-amber-50/50 p-2.5 rounded-xl border border-amber-200"></div>
+          <div id="listHTCandidates" class="grid grid-cols-2 gap-1.5 bg-amber-50/50 p-2 rounded-xl border border-amber-200/60"></div>
         </div>
 
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <h4 class="font-bold text-blue-700 uppercase tracking-wide">Kelas 8 (<span id="modalCount8">34</span> Orang)</h4>
+            <h4 class="font-bold text-blue-800 text-[11px] uppercase tracking-wide">Kelas 8 (<span id="modalCount8">34</span> Orang)</h4>
           </div>
-          <div id="listKls8" class="grid grid-cols-2 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200"></div>
+          <div id="listKls8" class="grid grid-cols-2 gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200"></div>
         </div>
 
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <h4 class="font-bold text-emerald-700 uppercase tracking-wide">Kelas 7 (<span id="modalCount7">15</span> Orang)</h4>
+            <h4 class="font-bold text-emerald-800 text-[11px] uppercase tracking-wide">Kelas 7 (<span id="modalCount7">15</span> Orang)</h4>
           </div>
-          <div id="listKls7" class="grid grid-cols-2 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200"></div>
+          <div id="listKls7" class="grid grid-cols-2 gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200"></div>
         </div>
       </div>
 
-      <div class="pt-3 border-t flex justify-between items-center">
-        <button onclick="resetAbsents()" class="text-slate-500 hover:text-slate-700 text-xs font-semibold">Centang Semua</button>
-        <button onclick="toggleAttendanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition">Terapkan</button>
+      <div class="pt-3 border-t border-slate-100 flex justify-between items-center gap-2">
+        <button onclick="resetAbsents()" class="text-slate-600 hover:text-slate-900 text-xs font-semibold py-2 px-3 rounded-lg bg-slate-100">Centang Semua</button>
+        <button onclick="toggleAttendanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition">Terapkan</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: DAFTAR GILIRAN TUGAS -->
-  <div id="statsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl max-h-[85vh] flex flex-col border border-slate-200">
-      <div class="flex justify-between items-center pb-3 border-b">
+  <div id="statsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl max-h-[85vh] flex flex-col border border-slate-200">
+      
+      <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden"></div>
+
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
         <div>
-          <h3 class="font-bold text-sm text-slate-800">Riwayat Penugasan Jaga</h3>
-          <p class="text-[11px] text-slate-500">Anggota dengan frekuensi jaga paling sedikit akan diutamakan.</p>
+          <h3 class="font-bold text-sm text-slate-900">Catatan Frekuensi Jaga</h3>
+          <p class="text-[10.5px] text-slate-500">Yang paling jarang bertugas diprioritaskan bertugas.</p>
         </div>
-        <button onclick="toggleStatsModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+        <button onclick="toggleStatsModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none p-1">&times;</button>
       </div>
 
-      <div class="overflow-y-auto py-3 space-y-1.5 flex-1 text-xs" id="statsContainer"></div>
+      <div class="overflow-y-auto py-2.5 space-y-1.5 flex-1 text-xs" id="statsContainer"></div>
 
-      <div class="pt-3 border-t flex justify-between items-center">
+      <div class="pt-3 border-t border-slate-100 flex justify-between items-center">
         <button onclick="resetDutyHistory()" class="text-rose-600 hover:text-rose-700 text-xs font-semibold py-1.5 px-2.5 rounded-lg hover:bg-rose-50 transition">
           Reset Catatan
         </button>
@@ -163,18 +190,18 @@
     </div>
   </div>
 
-  <!-- TOAST NOTIFIKASI -->
-  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-2xl hidden transition-all flex items-center gap-2 z-50">
+  <!-- TOAST NOTIFIKASI RAMPING UNTUK HP -->
+  <div id="toast" class="fixed top-5 inset-x-4 max-w-xs mx-auto bg-slate-900/95 backdrop-blur-sm text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-xl hidden transition-all flex items-center justify-center gap-2 z-50">
     <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-    <span id="toastMsg">Tersalin!</span>
+    <span id="toastMsg">Tersalin ke papan klip!</span>
   </div>
 
   <script>
     // 6 NAMA KHUSUS KOORDINATOR HT
     const htCandidates = [
-      { id: "ht_1", full: "Tri Puspita Ayuningtyas", call: "Tyas", isHTOnly: true },
+      { id: "ht_1", full: "Tri Puspita Ayuningtyas", call: "Puspita", isHTOnly: true },
       { id: "8_1",  full: "Anabela Kirana Basmala", call: "Anabela" },
-      { id: "8_2",  full: "Franklin Delano Nugroho", call: "Delano" },
+      { id: "8_2",  full: "Franklin Delano Nugroho", call: "Franklin" },
       { id: "8_3",  full: "Hani Anandara Haris", call: "Hani" },
       { id: "8_4",  full: "Azkiya Marwah", call: "Azkiya" },
       { id: "8_5",  full: "Jeslyn Felicity Kezia Letare Sinaga", call: "Jeslyn" }
@@ -183,7 +210,7 @@
     // DATA KELAS 8 (34 Anggota)
     const rawClass8 = [
       { id: "8_1", full: "Anabela Kirana Basmala", call: "Anabela", grade: 8 },
-      { id: "8_2", full: "Franklin Delano Nugroho", call: "Delano", grade: 8 },
+      { id: "8_2", full: "Franklin Delano Nugroho", call: "Franklin", grade: 8 },
       { id: "8_3", full: "Hani Anandara Haris", call: "Hani", grade: 8 },
       { id: "8_4", full: "Azkiya Marwah", call: "Azkiya", grade: 8 },
       { id: "8_5", full: "Jeslyn Felicity Kezia Letare Sinaga", call: "Jeslyn", grade: 8 },
@@ -342,7 +369,7 @@
         }).filter(Boolean);
 
         document.getElementById('prevDutyDesc').innerHTML = `
-          <strong>${names.length} Orang Kemarin Bertugas:</strong> ${names.slice(0, 8).join(', ')}... (+${names.length - 8} lainnya). <em>Mereka diprioritaskan libur hari ini.</em>
+          <strong>${names.length} Orang Kemarin Bertugas:</strong> ${names.slice(0, 6).join(', ')}... (+${names.length - 6} lainnya). <em>Mereka diprioritaskan libur hari ini.</em>
         `;
       } else {
         document.getElementById('prevDutyDate').innerText = "Belum ada riwayat";
@@ -371,9 +398,9 @@
       htCandidates.forEach(m => {
         const isAbsent = absentIds.has(m.id);
         listHT.innerHTML += `
-          <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer select-none text-slate-700">
-            <input type="checkbox" ${!isAbsent ? 'checked' : ''} onchange="toggleAbsent('${m.id}')" class="rounded text-amber-600 focus:ring-0">
-            <span class="truncate ${isAbsent ? 'line-through text-slate-400 font-normal' : 'font-medium'}">${m.call}</span>
+          <label class="flex items-center gap-2 p-2 rounded-xl bg-white border border-amber-200/70 select-none text-slate-700 active:scale-95 transition">
+            <input type="checkbox" ${!isAbsent ? 'checked' : ''} onchange="toggleAbsent('${m.id}')" class="rounded text-amber-600 focus:ring-0 w-3.5 h-3.5">
+            <span class="truncate ${isAbsent ? 'line-through text-slate-400 font-normal' : 'font-semibold text-slate-800'} text-[11px]">${m.call}</span>
           </label>
         `;
       });
@@ -381,9 +408,9 @@
       rawClass8.forEach(m => {
         const isAbsent = absentIds.has(m.id);
         list8.innerHTML += `
-          <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer select-none text-slate-700">
-            <input type="checkbox" ${!isAbsent ? 'checked' : ''} onchange="toggleAbsent('${m.id}')" class="rounded text-blue-600 focus:ring-0">
-            <span class="truncate ${isAbsent ? 'line-through text-slate-400 font-normal' : 'font-medium'}">${m.call}</span>
+          <label class="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200/80 select-none text-slate-700 active:scale-95 transition">
+            <input type="checkbox" ${!isAbsent ? 'checked' : ''} onchange="toggleAbsent('${m.id}')" class="rounded text-blue-600 focus:ring-0 w-3.5 h-3.5">
+            <span class="truncate ${isAbsent ? 'line-through text-slate-400 font-normal' : 'font-semibold text-slate-800'} text-[11px]">${m.call}</span>
           </label>
         `;
       });
@@ -391,9 +418,9 @@
       rawClass7.forEach(m => {
         const isAbsent = absentIds.has(m.id);
         list7.innerHTML += `
-          <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer select-none text-slate-700">
-            <input type="checkbox" ${!isAbsent ? 'checked' : ''} onchange="toggleAbsent('${m.id}')" class="rounded text-emerald-600 focus:ring-0">
-            <span class="truncate ${isAbsent ? 'line-through text-slate-400 font-normal' : 'font-medium'}">${m.call}</span>
+          <label class="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200/80 select-none text-slate-700 active:scale-95 transition">
+            <input type="checkbox" ${!isAbsent ? 'checked' : ''} onchange="toggleAbsent('${m.id}')" class="rounded text-emerald-600 focus:ring-0 w-3.5 h-3.5">
+            <span class="truncate ${isAbsent ? 'line-through text-slate-400 font-normal' : 'font-semibold text-slate-800'} text-[11px]">${m.call}</span>
           </label>
         `;
       });
@@ -437,7 +464,6 @@
       const active8 = rawClass8.filter(m => !absentIds.has(m.id));
       const active7 = rawClass7.filter(m => !absentIds.has(m.id));
 
-      // Butuh minimal: Kelas 8 (10 orang) dan Kelas 7 (8 orang)
       if (active8.length < 10 || active7.length < 8) {
         alert("Minimal anggota hadir: 10 anak kelas 8 dan 8 anak kelas 7!");
         return;
@@ -456,10 +482,9 @@
       }
       const selectedHT = poolHT[0];
 
-      // Exclude Koordinator HT dari kelas 8 agar tidak dobel
+      // Exclude Koordinator HT dari kelas 8
       const availableClass8 = rawClass8.filter(m => m.id !== selectedHT.id);
 
-      // Urutkan pool berdasarkan keadilan
       let pool8 = getWeightedPool(availableClass8, history, lastGuardedSet);
       let pool7 = getWeightedPool(rawClass7, history, lastGuardedSet);
 
@@ -472,7 +497,7 @@
       const kls7_tangga_barat = [pool7.shift(), pool7.shift()];
       const kls7_parkiran     = [pool7.shift(), pool7.shift()];
 
-      // 3. ISHOMA (Otomatis dipilih: 1 orang dari slot 8/9 dan 1 orang dari slot 7)
+      // 3. ISHOMA (1 orang dari slot 8/9 dan 1 orang dari slot 7)
       const getRandomOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
       const ishoma_tangga_timur = [getRandomOne(kls8_tangga_timur), getRandomOne(kls7_tangga_timur)];
@@ -480,14 +505,11 @@
       const ishoma_parkiran     = [getRandomOne(kls8_parkiran), getRandomOne(kls7_parkiran)];
 
       // 4. PENJAGA LANTAI
-      // Lantai 2 (2 orang KELAS 8)
-      const lantai2 = [pool8.shift(), pool8.shift()];
-      // Lantai 3 (2 orang KELAS 8)
-      const lantai3 = [pool8.shift(), pool8.shift()];
-      // Lantai 4 (2 orang KELAS 7)
-      const lantai4 = [pool7.shift(), pool7.shift()];
+      const lantai2 = [pool8.shift(), pool8.shift()]; // 2 Kls 8
+      const lantai3 = [pool8.shift(), pool8.shift()]; // 2 Kls 8
+      const lantai4 = [pool7.shift(), pool7.shift()]; // 2 Kls 7
 
-      // 5. GERBANG DEPAN (2 orang, diambil dari sisa pool paling prioritas)
+      // 5. GERBANG DEPAN (2 orang sisa pool)
       let poolSisa = [...pool8, ...pool7].sort((a, b) => a.score - b.score);
       const gerbang = [poolSisa.shift(), poolSisa.shift()];
 
@@ -513,7 +535,6 @@
         ht: selectedHT
       };
 
-      // Kumpulkan ID unik yang bertugas hari ini
       const dutyIds = [
         ...assignments.tanggaTimur_89, ...assignments.tanggaTimur_7,
         ...assignments.tanggaBarat_89, ...assignments.tanggaBarat_7,
@@ -564,19 +585,16 @@
       const formattedDate = formatDateIndo(currentDuty.date);
       const isFriday = isDateFriday(currentDuty.date);
 
-      // Susun Bagian Tangga Timur
       let tanggaTimurText = `- Istirahat kelas 8 & 9: ${getName(ass.tanggaTimur_89[0])} & ${getName(ass.tanggaTimur_89[1])}\n- Istirahat kelas 7:  ${getName(ass.tanggaTimur_7[0])} & ${getName(ass.tanggaTimur_7[1])}`;
       if (!isFriday) {
         tanggaTimurText += `\n- Ishoma: ${getName(ass.tanggaTimur_ishoma[0])} & ${getName(ass.tanggaTimur_ishoma[1])}`;
       }
 
-      // Susun Bagian Tangga Barat
       let tanggaBaratText = `- Istirahat kelas 8 & 9: ${getName(ass.tanggaBarat_89[0])} & ${getName(ass.tanggaBarat_89[1])}\n- Istirahat kelas 7:  ${getName(ass.tanggaBarat_7[0])} & ${getName(ass.tanggaBarat_7[1])}`;
       if (!isFriday) {
         tanggaBaratText += `\n- Ishoma: ${getName(ass.tanggaBarat_ishoma[0])} & ${getName(ass.tanggaBarat_ishoma[1])}`;
       }
 
-      // Susun Bagian Parkiran Barat
       let parkiranText = `- Istirahat kelas 8 & 9: ${getName(ass.parkiran_89[0])} & ${getName(ass.parkiran_89[1])}\n- Istirahat kelas 7: ${getName(ass.parkiran_7[0])} & ${getName(ass.parkiran_7[1])}`;
       if (!isFriday) {
         parkiranText += `\n- Ishoma:  ${getName(ass.parkiran_ishoma[0])} & ${getName(ass.parkiran_ishoma[1])}`;
@@ -627,18 +645,18 @@ Tetap disiplin, kompak, dan bertanggung jawab dalam menjalankan tugas. Lakukan t
       if (!output.value) return;
 
       navigator.clipboard.writeText(output.value).then(() => {
-        showToast("Teks jadwal tersalin!");
+        showToast("Teks jadwal disalin ke clipboard!");
       }).catch(() => {
         output.select();
         document.execCommand('copy');
-        showToast("Teks jadwal tersalin!");
+        showToast("Teks jadwal berhasil disalin!");
       });
     }
 
     function copyWebLink() {
       const url = window.location.href;
       navigator.clipboard.writeText(url).then(() => {
-        showToast("Link web terupdate tersalin! Bagikan ke tim.");
+        showToast("Link web tersalin! Bagikan ke tim.");
       });
     }
 
@@ -661,13 +679,13 @@ Tetap disiplin, kompak, dan bertanggung jawab dalam menjalankan tugas. Lakukan t
         const isGuardedYesterday = lastGuardedSet.has(m.id);
 
         container.innerHTML += `
-          <div class="flex items-center justify-between p-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition">
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
             <div class="flex items-center gap-2">
-              <span class="font-bold text-[10px] px-1.5 py-0.5 rounded ${m.grade === 8 ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}">K${m.grade}</span>
-              <span class="font-medium text-slate-700">${m.call}</span>
-              ${isGuardedYesterday ? '<span class="text-[9px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded-full">Kemarin Jaga</span>' : ''}
+              <span class="font-bold text-[9px] px-1.5 py-0.5 rounded ${m.grade === 8 ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}">K${m.grade}</span>
+              <span class="font-semibold text-slate-800 text-[11px]">${m.call}</span>
+              ${isGuardedYesterday ? '<span class="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded-full">Kemarin Jaga</span>' : ''}
             </div>
-            <span class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs">${count}x</span>
+            <span class="font-mono font-bold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded text-[11px]">${count}x</span>
           </div>
         `;
       });
@@ -688,7 +706,7 @@ Tetap disiplin, kompak, dan bertanggung jawab dalam menjalankan tugas. Lakukan t
       const toast = document.getElementById('toast');
       document.getElementById('toastMsg').innerText = msg;
       toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 2500);
+      setTimeout(() => toast.classList.add('hidden'), 2400);
     }
   </script>
 </body>
