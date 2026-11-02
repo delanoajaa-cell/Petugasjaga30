@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Portal Petugas Jaga OSIS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+    .tab-active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
+  </style>
+</head>
+<body class="text-slate-800 pb-28 md:pb-12">
+
+  <!-- Header OSIS Resmi -->
+  <header class="bg-blue-900 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-700/80 flex items-center justify-center font-bold text-lg border border-blue-400/30 shadow-inner">
+          <i class="fa-solid fa-shield-halved text-yellow-400"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-tight tracking-wide">PORTAL PETUGAS JAGA OSIS</h1>
+          <p class="text-xs text-blue-200">Seksi Bidang Ketertiban & Kedisiplinan</p>
+        </div>
+      </div>
+      <div id="cloudStatus" class="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-blue-800 text-blue-200 border border-blue-700">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="syncText">Tersinkron</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Konten Utama -->
+  <main class="max-w-4xl mx-auto px-3.5 sm:px-4 py-4 space-y-4">
+
+    <!-- Card Konfigurasi Tanggal -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+        <div class="sm:col-span-5">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+            <i class="fa-regular fa-calendar-days text-blue-600 mr-1"></i> Tanggal Penugasan
+          </label>
+          <input type="date" id="dutyDate" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3 py-2.5 font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none" />
+        </div>
+        <div class="sm:col-span-4 flex items-center h-10 px-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-medium text-slate-600">
+          <i class="fa-solid fa-circle-info text-blue-500 mr-2 text-sm flex-shrink-0"></i>
+          <span id="dayNotice" class="truncate">Memuat info hari...</span>
+        </div>
+        <div class="sm:col-span-3">
+          <button id="btnGenerate" onclick="generateDutySchedule()" class="w-full bg-blue-700 hover:bg-blue-800 active:scale-[0.98] transition-all text-white font-bold text-sm py-2.5 px-4 rounded-xl shadow flex items-center justify-center gap-2">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Buat Jadwal</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Navigasi Jadwal (Harian vs Tugas Upacara Senin) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="flex border-b border-slate-200 bg-slate-50/50">
+        <button id="tabJadwalHarian" onclick="switchTab('harian')" class="flex-1 py-3 px-4 text-xs sm:text-sm text-center tab-active flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-clipboard-list"></i>
+          <span>Jadwal Jaga Harian</span>
+        </button>
+        <button id="tabUpacaraSenin" onclick="switchTab('upacara')" class="flex-1 py-3 px-4 text-xs sm:text-sm text-center text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2 transition relative">
+          <i class="fa-solid fa-flag"></i>
+          <span>Tugas Khusus Upacara</span>
+          <span id="badgeSenin" class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded-full border border-amber-300">Senin</span>
+        </button>
+      </div>
+
+      <!-- PANEL 1: Jadwal Jaga Harian -->
+      <div id="panelHarian" class="p-4 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <span class="text-xs font-bold text-blue-800 uppercase tracking-wider" id="previewDateHeader">Senin, --</span>
+            <h2 class="text-base font-extrabold text-slate-800">Petugas Jaga OSIS</h2>
+          </div>
+          <button onclick="copyToClipboard('harian')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 active:scale-95 transition">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>Salin Format WA</span>
+          </button>
+        </div>
+
+        <div id="dutyScheduleView" class="space-y-4 text-sm text-slate-700"></div>
+      </div>
+
+      <!-- PANEL 2: Tugas Khusus Upacara Senin -->
+      <div id="panelUpacara" class="p-4 space-y-4 hidden">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <span class="text-xs font-bold text-amber-800 uppercase tracking-wider" id="previewUpacaraDate">Senin, --</span>
+            <h2 class="text-base font-extrabold text-slate-800">Tugas Khusus Upacara Bendera</h2>
+          </div>
+          <button onclick="copyToClipboard('upacara')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 active:scale-95 transition">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>Salin Format WA</span>
+          </button>
+        </div>
+
+        <div id="upacaraScheduleView"></div>
+      </div>
+    </div>
+
+    <!-- Rekapitulasi Rotasi Adil -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <i class="fa-solid fa-users text-blue-600 mr-1.5"></i> Rekapitulasi Rotasi
+        </h3>
+        <span class="text-xs text-slate-500">Total: <strong class="text-slate-700">49 Anggota</strong> (34 Kls 8, 15 Kls 7)</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="statsMemberSummary"></div>
+    </div>
+  </main>
+
+  <!-- Sticky Mobile Action Bar -->
+  <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-2.5 z-40 md:hidden shadow-lg flex items-center gap-2">
+    <button onclick="copyCurrentActiveTab()" class="flex-1 bg-emerald-600 text-white text-xs font-bold py-2.5 rounded-xl shadow flex items-center justify-center gap-1.5 active:scale-95 transition">
+      <i class="fa-brands fa-whatsapp text-base"></i>
+      <span id="btnMobileCopyText">Salin Jadwal Jaga</span>
+    </button>
+    <button onclick="generateDutySchedule()" class="bg-blue-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow active:scale-95 transition">
+      <i class="fa-solid fa-arrows-rotate"></i>
+    </button>
+  </div>
+
+  <!-- Toast Notifikasi -->
+  <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg transition-all duration-200 opacity-0 pointer-events-none flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">Teks berhasil disalin!</span>
+  </div>
+
+<script>
+// --- MASTER DATA ANGGOTA (Mokossa: Perempuan / 'P') ---
+// Kelas 8: 9 Cowo (L), 25 Cewe (P)
+const MEMBERS_CLASS_8 = [
+  { id: 801, name: "Anabela Kirana Basmala", call: "Anabela", class: 8, gender: 'P', isHTCandidate: true },
+  { id: 802, name: "Franklin Delano Nugroho", call: "Franklin", class: 8, gender: 'L', isHTCandidate: true },
+  { id: 803, name: "Hani Anandara Haris", call: "Hani", class: 8, gender: 'P', isHTCandidate: true },
+  { id: 804, name: "Azkiya Marwah", call: "Azkiya", class: 8, gender: 'P', isHTCandidate: true },
+  { id: 805, name: "Jeslyn Felicity Kezia Letare Sinaga", call: "Jeslyn", class: 8, gender: 'P', isHTCandidate: true },
+  { id: 806, name: "Naomi Berliana Siregar", call: "Naomi", class: 8, gender: 'P' },
+  { id: 807, name: "Gendis Adzra Fatharani", call: "Gendis", class: 8, gender: 'P' },
+  { id: 808, name: "Muhammad Ijlal Hadi", call: "Ijlal", class: 8, gender: 'L' },
+  { id: 809, name: "Naura Az Zahra Ahmad", call: "Naura", class: 8, gender: 'P' },
+  { id: 810, name: "Thara Nafiza Mirsyam", call: "Thara", class: 8, gender: 'P' },
+  { id: 811, name: "Gibran Aril Alauna", call: "Gibran", class: 8, gender: 'L' },
+  { id: 812, name: "Bintang Al Khalifi Dzikri Ramadhan", call: "Bintang", class: 8, gender: 'L' },
+  { id: 813, name: "Janeeta Khanza", call: "Janeeta", class: 8, gender: 'P' },
+  { id: 814, name: "Aisyah Putri Ramadhani", call: "Aisyah", class: 8, gender: 'P' },
+  { id: 815, name: "Salsabila Nazwa Aleya", call: "Nazwa", class: 8, gender: 'P' },
+  { id: 816, name: "Adinda Gautami Sekar Khasmana", call: "Adinda", class: 8, gender: 'P' },
+  { id: 817, name: "Raffa Muhammad Azzam", call: "Azzam", class: 8, gender: 'L' },
+  { id: 818, name: "Priscilla Qistina Winata", call: "Priscilla", class: 8, gender: 'P' }, // Nata
+  { id: 819, name: "Hilbram Rizqi Pradana", call: "Hilbram", class: 8, gender: 'L' },
+  { id: 820, name: "Mokossa Imanino", call: "Mokossa", class: 8, gender: 'P' }, // Cewe
+  { id: 821, name: "Akbar Rafif Ibrahim Nandiwardhana", call: "Rafif", class: 8, gender: 'L' },
+  { id: 822, name: "Dyo Nur Ramadhani", call: "Dyo", class: 8, gender: 'L' },
+  { id: 823, name: "Khansa Apriya Nafisah", call: "Khansa", class: 8, gender: 'P' },
+  { id: 824, name: "Syaira Putri Rainandya", call: "Syaira", class: 8, gender: 'P' },
+  { id: 825, name: "Allecia Zanetta Belva Achir Subagio", call: "Allecia", class: 8, gender: 'P' },
+  { id: 826, name: "Nadhifah Maulida Syafitri", call: "Nadhifah", class: 8, gender: 'P' },
+  { id: 827, name: "Keisha Elmira Alexandra", call: "Keisha", class: 8, gender: 'P' },
+  { id: 828, name: "Gresia Anindya Ansori", call: "Gresia", class: 8, gender: 'P' },
+  { id: 829, name: "Dinda Janika", call: "Dinda", class: 8, gender: 'P' },
+  { id: 830, name: "Adzra Aida Setiawan", call: "Adzra", class: 8, gender: 'P' },
+  { id: 831, name: "Alya Adjie Septi", call: "Alya", class: 8, gender: 'P' },
+  { id: 832, name: "Shaqeela Keysha Sugandi", call: "Keysha", class: 8, gender: 'P' },
+  { id: 833, name: "Absyalom Matthew Sinaga", call: "Matthew", class: 8, gender: 'L' },
+  { id: 834, name: "Keyzeera Kanaya Koesman", call: "Keyzeera", class: 8, gender: 'P' }
+];
+
+// Kelas 7: 6 Cowo (L), 9 Cewe (P)
+const MEMBERS_CLASS_7 = [
+  { id: 701, name: "Khanza Ramadhani Mustofa", call: "Khanza", class: 7, gender: 'P' },
+  { id: 702, name: "Pramesti Naira Az Zahra", call: "Naira", class: 7, gender: 'P' },
+  { id: 703, name: "Faith Afkar Aqilah", call: "Faith", class: 7, gender: 'L' },
+  { id: 704, name: "Zafirra Putri Nurfatyya", call: "Zafirra", class: 7, gender: 'P' },
+  { id: 705, name: "Ibnu Raja Samoes", call: "Ibnu", class: 7, gender: 'L' },
+  { id: 706, name: "Aulia Dwi Ramadhan", call: "Aulia", class: 7, gender: 'L' },
+  { id: 707, name: "Talitha Khaira Adfath", call: "Thalita", class: 7, gender: 'P' },
+  { id: 708, name: "Keira Claresta Prasetyo", call: "Keira", class: 7, gender: 'P' },
+  { id: 709, name: "Muhammad Khallif Yura Pranaja", call: "Khallif", class: 7, gender: 'L' },
+  { id: 710, name: "Faiza Ayudia Inara", call: "Faiza", class: 7, gender: 'P' },
+  { id: 711, name: "Komang Adi Kenzie Wistara", call: "Kenzie", class: 7, gender: 'L' },
+  { id: 712, name: "Aurel Qoireen Najwa Mubarok", call: "Qoireen", class: 7, gender: 'P' },
+  { id: 713, name: "Rafa Fauzan Kamil", call: "Rafa", class: 7, gender: 'L' },
+  { id: 714, name: "Mazea Nazifa Khairiah Pratama", call: "Mazea", class: 7, gender: 'P' },
+  { id: 715, name: "Queisya Khadziya Zuidirga", call: "Queisya", class: 7, gender: 'P' }
+];
+
+// 6 Kandidat Koordinator HT
+const HT_SPECIAL_CANDIDATES = [
+  { id: 991, name: "Tri Puspita Ayuningtyas", call: "Puspita" },
+  { id: 801, name: "Anabela Kirana Basmala", call: "Anabela" },
+  { id: 802, name: "Franklin Delano Nugroho", call: "Franklin" },
+  { id: 803, name: "Hani Anandara Haris", call: "Hani" },
+  { id: 804, name: "Azkiya Marwah", call: "Azkiya" },
+  { id: 805, name: "Jeslyn Felicity Kezia Letare Sinaga", call: "Jeslyn" }
+];
+
+// 13 Nama Pengecualian pada Senin (2-23 November)
+const SPECIAL_EXCLUDED_MONDAY_IDS = [
+  806, // Naomi
+  711, // Kenzie
+  802, // Franklin (bisa HT)
+  803, // Hani (bisa HT)
+  813, // Janeeta
+  833, // Absyalom (Matthew)
+  805, // Jeslyn (bisa HT)
+  816, // Adinda
+  705, // Ibnu
+  706, // Aulia
+  818, // Priscilla (Nata)
+  810, // Thara
+  713  // Rafa
+];
+
+// State Aplikasi
+let appState = {
+  activeTab: 'harian',
+  dutyHistory: {},
+  memberDutyCount: {},
+  lastGuardedDate: {},
+  htHistory: {}
+};
+
+const SYNC_URL = 'https://api.restful-api.dev/objects/ff808181932bad3a0193498877660099';
+
+function isSpecialExclusionMonday(dateObj) {
+  const isMonday = dateObj.getDay() === 1;
+  const month = dateObj.getMonth(); // 10 = November
+  const day = dateObj.getDate();
+  return isMonday && month === 10 && day >= 2 && day <= 23;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const day = today.getDay();
+  if (day === 0) today.setDate(today.getDate() + 1);
+  if (day === 6) today.setDate(today.getDate() + 2);
+
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('dutyDate').value = `${yyyy}-${mm}-${dd}`;
+
+  loadLocalState();
+  initCloudSync();
+  onDateChange();
+
+  document.getElementById('dutyDate').addEventListener('change', onDateChange);
+});
+
+function onDateChange() {
+  const dateStr = document.getElementById('dutyDate').value;
+  if (!dateStr) return;
+  const dateObj = new Date(dateStr + 'T00:00:00');
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const dayName = days[dateObj.getDay()];
+  const isMonday = dateObj.getDay() === 1;
+  const isFriday = dateObj.getDay() === 5;
+  const isSpecialMon = isSpecialExclusionMonday(dateObj);
+
+  const notice = document.getElementById('dayNotice');
+  const badgeSenin = document.getElementById('badgeSenin');
+
+  if (isSpecialMon) {
+    notice.innerHTML = `<span class="text-amber-700 font-bold">Senin Khusus (2-23 Nov)</span>: 13 nama bebas jaga pos`;
+    badgeSenin.className = "text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full border border-emerald-300";
+    badgeSenin.textContent = "Aktif";
+  } else if (isMonday) {
+    notice.innerHTML = `<span class="text-blue-700 font-bold">Hari Senin</span>: Termasuk penjagaan Upacara`;
+    badgeSenin.className = "text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full border border-emerald-300";
+    badgeSenin.textContent = "Aktif";
+  } else if (isFriday) {
+    notice.innerHTML = `<span class="text-indigo-700 font-bold">Hari Jumat</span>: Tanpa sesi Ishoma`;
+    badgeSenin.className = "text-[10px] bg-slate-100 text-slate-500 font-medium px-1.5 py-0.5 rounded-full";
+    badgeSenin.textContent = "Senin Saja";
+  } else {
+    notice.innerHTML = `Hari ${dayName}: Penugasan Jaga Reguler`;
+    badgeSenin.className = "text-[10px] bg-slate-100 text-slate-500 font-medium px-1.5 py-0.5 rounded-full";
+    badgeSenin.textContent = "Senin Saja";
+  }
+
+  if (appState.dutyHistory[dateStr]) {
+    renderExistingSchedule(dateStr);
+  } else {
+    generateDutySchedule();
+  }
+}
+
+function switchTab(tab) {
+  appState.activeTab = tab;
+  const tabHarian = document.getElementById('tabJadwalHarian');
+  const tabUpacara = document.getElementById('tabUpacaraSenin');
+  const panelHarian = document.getElementById('panelHarian');
+  const panelUpacara = document.getElementById('panelUpacara');
+  const mobileBtnText = document.getElementById('btnMobileCopyText');
+
+  if (tab === 'harian') {
+    tabHarian.className = "flex-1 py-3 px-4 text-xs sm:text-sm text-center tab-active flex items-center justify-center gap-2 transition";
+    tabUpacara.className = "flex-1 py-3 px-4 text-xs sm:text-sm text-center text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2 transition relative";
+    panelHarian.classList.remove('hidden');
+    panelUpacara.classList.add('hidden');
+    mobileBtnText.textContent = "Salin Jadwal Jaga";
+  } else {
+    tabUpacara.className = "flex-1 py-3 px-4 text-xs sm:text-sm text-center tab-active flex items-center justify-center gap-2 transition relative";
+    tabHarian.className = "flex-1 py-3 px-4 text-xs sm:text-sm text-center text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2 transition";
+    panelUpacara.classList.remove('hidden');
+    panelHarian.classList.add('hidden');
+    mobileBtnText.textContent = "Salin Tugas Upacara";
+  }
+}
+
+function copyCurrentActiveTab() {
+  copyToClipboard(appState.activeTab);
+}
+
+function formatIndonesianDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ALGORITMA PENILAIAN BEBAN & ROTASI
+function getCandidateScore(member, targetDate) {
+  const dutyCount = appState.memberDutyCount[member.id] || 0;
+  const lastDate = appState.lastGuardedDate[member.id];
+  let score = dutyCount * 10;
+
+  if (lastDate) {
+    const diffDays = Math.floor((new Date(targetDate) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) score += 40;
+    else if (diffDays === 2) score += 15;
+  }
+  score += Math.random() * 2;
+  return score;
+}
+
+function pickMembers(pool, count, excludeIds, assignedSet, targetDate) {
+  const candidates = pool.filter(m => !excludeIds.has(m.id));
+  candidates.sort((a, b) => getCandidateScore(a, targetDate) - getCandidateScore(b, targetDate));
+  const picked = candidates.slice(0, count);
+  picked.forEach(m => {
+    excludeIds.add(m.id);
+    assignedSet.add(m.id);
+  });
+  return picked;
+}
+
+// Pemilihan Khusus Cowo / Cewe untuk Cek Kamar Mandi
+function pickMemberByGender(pool, gender, excludeIds, assignedSet, targetDate) {
+  const candidates = pool.filter(m => !excludeIds.has(m.id) && m.gender === gender);
+  if (candidates.length === 0) {
+    return pickMembers(pool, 1, excludeIds, assignedSet, targetDate)[0];
+  }
+  candidates.sort((a, b) => getCandidateScore(a, targetDate) - getCandidateScore(b, targetDate));
+  const chosen = candidates[0];
+  excludeIds.add(chosen.id);
+  assignedSet.add(chosen.id);
+  return chosen;
+}
+
+function pickHTCoordinator(excludeIds, assignedSet, targetDate) {
+  const candidates = HT_SPECIAL_CANDIDATES.filter(m => !excludeIds.has(m.id));
+  candidates.sort((a, b) => {
+    const countA = (appState.htHistory[a.id] || 0) + (appState.memberDutyCount[a.id] || 0) * 0.5;
+    const countB = (appState.htHistory[b.id] || 0) + (appState.memberDutyCount[b.id] || 0) * 0.5;
+    return countA - countB + (Math.random() * 2 - 1);
+  });
+  const chosen = candidates[0];
+  excludeIds.add(chosen.id);
+  assignedSet.add(chosen.id);
+  return chosen;
+}
+
+// ==========================================
+// CORE GENERATOR PENUGASAN JAGA
+// ==========================================
+function generateDutySchedule() {
+  const dateStr = document.getElementById('dutyDate').value;
+  if (!dateStr) return;
+
+  const dateObj = new Date(dateStr + 'T00:00:00');
+  const isFriday = dateObj.getDay() === 5;
+  const isMonday = dateObj.getDay() === 1;
+  const isSpecialMon = isSpecialExclusionMonday(dateObj);
+
+  const excludeIds = new Set();
+  const assignedSet = new Set();
+
+  // 1. Koordinator HT (1 orang khusus)
+  const htCoordinator = pickHTCoordinator(excludeIds, assignedSet, dateStr);
+
+  // 2. Pengecualian 13 nama jika Senin (2-23 November)
+  if (isSpecialMon) {
+    SPECIAL_EXCLUDED_MONDAY_IDS.forEach(id => excludeIds.add(id));
+  }
+
+  // 3. PRIORITAS: Penjaga Lantai (Wajib 1 Putra & 1 Putri per lantai untuk cek toilet)
+  // Lantai 2: Kelas 8 (1 Cowo & 1 Cewe)
+  const lt2_cowo = pickMemberByGender(MEMBERS_CLASS_8, 'L', excludeIds, assignedSet, dateStr);
+  const lt2_cewe = pickMemberByGender(MEMBERS_CLASS_8, 'P', excludeIds, assignedSet, dateStr);
+  const lantai2 = [lt2_cewe, lt2_cowo];
+
+  // Lantai 3: Kelas 8 (1 Cowo & 1 Cewe)
+  const lt3_cowo = pickMemberByGender(MEMBERS_CLASS_8, 'L', excludeIds, assignedSet, dateStr);
+  const lt3_cewe = pickMemberByGender(MEMBERS_CLASS_8, 'P', excludeIds, assignedSet, dateStr);
+  const lantai3 = [lt3_cewe, lt3_cowo];
+
+  // Lantai 4: Kelas 7 (1 Cowo & 1 Cewe)
+  const lt4_cowo = pickMemberByGender(MEMBERS_CLASS_7, 'L', excludeIds, assignedSet, dateStr);
+  const lt4_cewe = pickMemberByGender(MEMBERS_CLASS_7, 'P', excludeIds, assignedSet, dateStr);
+  const lantai4 = [lt4_cewe, lt4_cowo];
+
+  // 4. Penjaga Gerbang Depan: 2 orang Kelas 8
+  const gerbangDepan = pickMembers(MEMBERS_CLASS_8, 2, excludeIds, assignedSet, dateStr);
+
+  // 5. Tangga Timur: Kls 8 (2 orang), Kls 7 (2 orang)
+  const tanggaTimur_c8 = pickMembers(MEMBERS_CLASS_8, 2, excludeIds, assignedSet, dateStr);
+  const tanggaTimur_c7 = pickMembers(MEMBERS_CLASS_7, 2, excludeIds, assignedSet, dateStr);
+  const tanggaTimur_ishoma = { c8: tanggaTimur_c8[0], c7: tanggaTimur_c7[0] };
+
+  // 6. Tangga Barat: Kls 8 (2 orang), Kls 7 (2 orang)
+  const tanggaBarat_c8 = pickMembers(MEMBERS_CLASS_8, 2, excludeIds, assignedSet, dateStr);
+  const tanggaBarat_c7 = pickMembers(MEMBERS_CLASS_7, 2, excludeIds, assignedSet, dateStr);
+  const tanggaBarat_ishoma = { c8: tanggaBarat_c8[0], c7: tanggaBarat_c7[0] };
+
+  // 7. Parkiran Barat: Kls 8 (2 orang), Kls 7 (2 orang)
+  const parkiran_c8 = pickMembers(MEMBERS_CLASS_8, 2, excludeIds, assignedSet, dateStr);
+  const parkiran_c7 = pickMembers(MEMBERS_CLASS_7, 2, excludeIds, assignedSet, dateStr);
+  const parkiran_ishoma = { c8: parkiran_c8[0], c7: parkiran_c7[0] };
+  const parkiran_non_ishoma = { c8: parkiran_c8[1], c7: parkiran_c7[1] };
+
+  const regularSchedule = {
+    date: dateStr,
+    isFriday: isFriday,
+    isMonday: isMonday,
+    ht: htCoordinator,
+    tanggaTimur: { c8: tanggaTimur_c8, c7: tanggaTimur_c7, ishoma: tanggaTimur_ishoma },
+    tanggaBarat: { c8: tanggaBarat_c8, c7: tanggaBarat_c7, ishoma: tanggaBarat_ishoma },
+    gerbang: gerbangDepan,
+    parkiran: { c8: parkiran_c8, c7: parkiran_c7, ishoma: parkiran_ishoma, nonIshoma: parkiran_non_ishoma },
+    lantai: { lt2: lantai2, lt3: lantai3, lt4: lantai4 }
+  };
+
+  // 8. TUGAS KHUSUS SENIN (UPACARA) - Dari petugas jaga hari itu
+  let upacaraSchedule = null;
+  if (isMonday) {
+    upacaraSchedule = {
+      date: dateStr,
+      barisan_8A_8B: [parkiran_non_ishoma.c8, parkiran_non_ishoma.c7],
+      barisan_8C_8D: [parkiran_ishoma.c8, parkiran_ishoma.c7],
+      barisan_8E_8F: [lantai2[0], lantai2[1]],
+      barisan_8G_8H: [lantai3[0], lantai3[1]],
+      barisan_7A_7B: [lantai4[0], lantai4[1]],
+      barisan_7C_7D: [gerbangDepan[0], gerbangDepan[1]],
+      barisan_7E_7F: [tanggaBarat_c8[0], tanggaBarat_c8[1]],
+      barisan_7G_7H: [tanggaTimur_c8[0], tanggaTimur_c8[1]]
+    };
+  }
+
+  appState.dutyHistory[dateStr] = {
+    regular: regularSchedule,
+    upacara: upacaraSchedule
+  };
+
+  assignedSet.forEach(id => {
+    appState.memberDutyCount[id] = (appState.memberDutyCount[id] || 0) + 1;
+    appState.lastGuardedDate[id] = dateStr;
+  });
+  if (htCoordinator) {
+    appState.htHistory[htCoordinator.id] = (appState.htHistory[htCoordinator.id] || 0) + 1;
+  }
+
+  saveLocalState();
+  syncToCloud();
+
+  renderScheduleToUI(regularSchedule, upacaraSchedule);
+}
+
+function renderExistingSchedule(dateStr) {
+  const item = appState.dutyHistory[dateStr];
+  if (item) {
+    renderScheduleToUI(item.regular, item.upacara);
+  }
+}
+
+// RENDER UI
+function renderScheduleToUI(reg, upc) {
+  const formattedDate = formatIndonesianDate(reg.date);
+  document.getElementById('previewDateHeader').textContent = formattedDate;
+  document.getElementById('previewUpacaraDate').textContent = formattedDate;
+
+  // Render Panel Harian
+  const harianHTML = `
+    <!-- 1. Penjaga Tangga -->
+    <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/70">
+      <h4 class="font-bold text-blue-900 text-sm mb-2 flex items-center gap-2">
+        <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-extrabold">1</span>
+        Penjaga Tangga
+      </h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pl-2">
+        <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+          <p class="font-semibold text-slate-800 text-xs mb-1.5 text-blue-700 flex items-center gap-1">
+            <i class="fa-solid fa-arrow-right text-[10px]"></i> Timur
+          </p>
+          <ul class="space-y-1 text-xs">
+            <li><span class="text-slate-500">Istirahat kelas 8 & 9:</span> <strong>${reg.tanggaTimur.c8[0].call}</strong> & <strong>${reg.tanggaTimur.c8[1].call}</strong></li>
+            <li><span class="text-slate-500">Istirahat kelas 7:</span> <strong>${reg.tanggaTimur.c7[0].call}</strong> & <strong>${reg.tanggaTimur.c7[1].call}</strong></li>
+            ${!reg.isFriday ? `<li><span class="text-slate-500">Ishoma:</span> <strong>${reg.tanggaTimur.ishoma.c8.call}</strong> & <strong>${reg.tanggaTimur.ishoma.c7.call}</strong></li>` : ''}
+          </ul>
+        </div>
+        <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+          <p class="font-semibold text-slate-800 text-xs mb-1.5 text-blue-700 flex items-center gap-1">
+            <i class="fa-solid fa-arrow-right text-[10px]"></i> Barat
+          </p>
+          <ul class="space-y-1 text-xs">
+            <li><span class="text-slate-500">Istirahat kelas 8 & 9:</span> <strong>${reg.tanggaBarat.c8[0].call}</strong> & <strong>${reg.tanggaBarat.c8[1].call}</strong></li>
+            <li><span class="text-slate-500">Istirahat kelas 7:</span> <strong>${reg.tanggaBarat.c7[0].call}</strong> & <strong>${reg.tanggaBarat.c7[1].call}</strong></li>
+            ${!reg.isFriday ? `<li><span class="text-slate-500">Ishoma:</span> <strong>${reg.tanggaBarat.ishoma.c8.call}</strong> & <strong>${reg.tanggaBarat.ishoma.c7.call}</strong></li>` : ''}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Penjaga Gerbang Depan -->
+    <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/70">
+      <h4 class="font-bold text-blue-900 text-sm mb-1.5 flex items-center gap-2">
+        <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-extrabold">2</span>
+        Penjaga Gerbang Depan
+      </h4>
+      <div class="bg-white p-2.5 rounded-lg border border-slate-200 pl-4 text-xs">
+        <strong>${reg.gerbang[0].call}</strong> & <strong>${reg.gerbang[1].call}</strong>
+      </div>
+    </div>
+
+    <!-- 3. Parkiran Barat -->
+    <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/70">
+      <h4 class="font-bold text-blue-900 text-sm mb-1.5 flex items-center gap-2">
+        <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-extrabold">3</span>
+        Parkiran Barat
+      </h4>
+      <div class="bg-white p-2.5 rounded-lg border border-slate-200 pl-4 text-xs space-y-1">
+        <div><span class="text-slate-500">Istirahat kelas 8 & 9:</span> <strong>${reg.parkiran.c8[0].call}</strong> & <strong>${reg.parkiran.c8[1].call}</strong></div>
+        <div><span class="text-slate-500">Istirahat kelas 7:</span> <strong>${reg.parkiran.c7[0].call}</strong> & <strong>${reg.parkiran.c7[1].call}</strong></div>
+        ${!reg.isFriday ? `<div><span class="text-slate-500">Ishoma:</span> <strong>${reg.parkiran.ishoma.c8.call}</strong> & <strong>${reg.parkiran.ishoma.c7.call}</strong></div>` : ''}
+      </div>
+    </div>
+
+    <!-- 4. Penjaga Lantai (1 Cowo & 1 Cewe) -->
+    <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/70">
+      <div class="flex items-center justify-between mb-1.5">
+        <h4 class="font-bold text-blue-900 text-sm flex items-center gap-2">
+          <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-extrabold">4</span>
+          Penjaga Lantai
+        </h4>
+        <span class="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+          <i class="fa-solid fa-restroom text-blue-600 mr-1"></i>1 Cewe & 1 Cowo (Cek Toilet)
+        </span>
+      </div>
+      <div class="bg-white p-2.5 rounded-lg border border-slate-200 pl-4 text-xs space-y-1.5">
+        <div><span class="text-slate-500">Lantai 2:</span> <strong>${reg.lantai.lt2[0].call}</strong> & <strong>${reg.lantai.lt2[1].call}</strong></div>
+        <div><span class="text-slate-500">Lantai 3:</span> <strong>${reg.lantai.lt3[0].call}</strong> & <strong>${reg.lantai.lt3[1].call}</strong></div>
+        <div><span class="text-slate-500">Lantai 4:</span> <strong>${reg.lantai.lt4[0].call}</strong> & <strong>${reg.lantai.lt4[1].call}</strong></div>
+      </div>
+    </div>
+
+    <!-- 5. Koordinator HT -->
+    <div class="border border-slate-200 rounded-xl p-3 bg-amber-50/60 border-amber-200/80">
+      <h4 class="font-bold text-slate-900 text-sm flex items-center justify-between">
+        <span class="flex items-center gap-2">
+          <span class="w-5 h-5 rounded-md bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-extrabold">5</span>
+          Koordinator HT
+        </span>
+        <span class="text-xs font-extrabold text-blue-900 bg-white px-2.5 py-1 rounded-md border border-amber-300">${reg.ht.call}</span>
+      </h4>
+    </div>
+  `;
+  document.getElementById('dutyScheduleView').innerHTML = harianHTML;
+
+  // Render Panel Upacara Senin
+  const upacaraContainer = document.getElementById('upacaraScheduleView');
+  if (!reg.isMonday || !upc) {
+    upacaraContainer.innerHTML = `
+      <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+        <i class="fa-solid fa-calendar-xmark text-3xl mb-2 text-slate-300"></i>
+        <p class="font-semibold text-slate-600 text-sm">Bukan Hari Senin</p>
+        <p class="text-xs text-slate-400 mt-1">Tugas khusus barisan upacara hanya diterapkan untuk hari Senin.</p>
+      </div>
+    `;
+  } else {
+    upacaraContainer.innerHTML = `
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 font-mono text-xs text-slate-800 leading-relaxed whitespace-pre-wrap select-all">${buildWhatsAppText('upacara')}</div>
+    `;
+  }
+
+  renderMemberStats();
+}
+
+// FORMAT TEKS WHATSAPP
+function buildWhatsAppText(type) {
+  const dateStr = document.getElementById('dutyDate').value;
+  const item = appState.dutyHistory[dateStr];
+  if (!item) return "";
+
+  const reg = item.regular;
+  const formattedDate = formatIndonesianDate(reg.date);
+
+  // FORMAT JADWAL HARIAN
+  if (type === 'harian') {
+    let text = `📋 𝐏𝐄𝐓𝐔𝐆𝐀𝐒 𝐉𝐀𝐆𝐀 𝐎𝐒𝐈𝐒\n`;
+    text += `${formattedDate}\n`;
+    text += `━━━━━━━━━━━━━━━━━━\n\n`;
+
+    text += `*1. Penjaga Tangga*\n\n`;
+    text += `Timur\n\n`;
+    text += `- Istirahat kelas 8 & 9: ${reg.tanggaTimur.c8[0].call} & ${reg.tanggaTimur.c8[1].call}\n`;
+    text += `- Istirahat kelas 7:  ${reg.tanggaTimur.c7[0].call} & ${reg.tanggaTimur.c7[1].call}\n`;
+    if (!reg.isFriday) {
+      text += `- Ishoma: ${reg.tanggaTimur.ishoma.c8.call} & ${reg.tanggaTimur.ishoma.c7.call}\n`;
+    }
+    text += `\nBarat\n\n`;
+    text += `- Istirahat kelas 8 & 9: ${reg.tanggaBarat.c8[0].call} & ${reg.tanggaBarat.c8[1].call}\n`;
+    text += `- Istirahat kelas 7:  ${reg.tanggaBarat.c7[0].call} & ${reg.tanggaBarat.c7[1].call}\n`;
+    if (!reg.isFriday) {
+      text += `- Ishoma: ${reg.tanggaBarat.ishoma.c8.call} & ${reg.tanggaBarat.ishoma.c7.call}\n`;
+    }
+
+    text += `\n*2. Penjaga Gerbang Depan*\n\n`;
+    text += `- ${reg.gerbang[0].call} & ${reg.gerbang[1].call}\n\n`;
+
+    text += `*3. Parkiran Barat*\n\n`;
+    text += `- Istirahat kelas 8 & 9: ${reg.parkiran.c8[0].call} & ${reg.parkiran.c8[1].call}\n`;
+    text += `- Istirahat kelas 7: ${reg.parkiran.c7[0].call} & ${reg.parkiran.c7[1].call}\n`;
+    if (!reg.isFriday) {
+      text += `- Ishoma:  ${reg.parkiran.ishoma.c8.call} & ${reg.parkiran.ishoma.c7.call}\n`;
+    }
+
+    text += `\n*4. Penjaga Lantai*\n\n`;
+    text += `- Lantai 2: ${reg.lantai.lt2[0].call} & ${reg.lantai.lt2[1].call}\n`;
+    text += `- Lantai 3: ${reg.lantai.lt3[0].call} & ${reg.lantai.lt3[1].call}\n`;
+    text += `- Lantai 4: ${reg.lantai.lt4[0].call} & ${reg.lantai.lt4[1].call}\n\n`;
+
+    text += `*5. Koordinator HT : ${reg.ht.call}*\n\n`;
+    text += `━━━━━━━━━━━━━━━━━━\n`;
+    text += `✨ Semangat bertugas, semuanya! 💪🏻\n\n`;
+    text += `Tetap disiplin, kompak, dan bertanggung jawab dalam menjalankan tugas. Lakukan tugas dengan ramah, saling bantu, dan tetap semangat sampai selesai. Ingat, kerja sama yang baik dimulai dari hal-hal kecil. Semangat OSIS! 🔥`;
+    return text;
+  }
+
+  // FORMAT PERSIS TUGAS KHUSUS SENIN (UPACARA)
+  if (type === 'upacara') {
+    if (!reg.isMonday || !item.upacara) return "Hanya tersedia untuk jadwal hari Senin.";
+    const upc = item.upacara;
+
+    return `Sekbid 2
+9A - 9C
+Sekbid 3
+9D - 9F
+Parkiran barat
+8A - 8B (${upc.barisan_8A_8B[0].call} & ${upc.barisan_8A_8B[1].call})
+8C - 8D (${upc.barisan_8C_8D[0].call} & ${upc.barisan_8C_8D[1].call})
+Penjaga Lantai
+8E - 8F (${upc.barisan_8E_8F[0].call} & ${upc.barisan_8E_8F[1].call})
+8G - 8H (${upc.barisan_8G_8H[0].call} & ${upc.barisan_8G_8H[1].call})
+7A - 7B (${upc.barisan_7A_7B[0].call} & ${upc.barisan_7A_7B[1].call})
+Gerbang depan
+7C - 7D (${upc.barisan_7C_7D[0].call} & ${upc.barisan_7C_7D[1].call})
+Tangga barat
+7E - 7F (${upc.barisan_7E_7F[0].call} & ${upc.barisan_7E_7F[1].call})
+Tangga timur
+7G - 7H (${upc.barisan_7G_7H[0].call} & ${upc.barisan_7G_7H[1].call})`;
+  }
+
+  return "";
+}
+
+function copyToClipboard(type) {
+  const text = buildWhatsAppText(type);
+  if (!text) {
+    showToast("Jadwal belum dibuat!", true);
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(type === 'harian' ? "Format WA Jadwal Jaga disalin!" : "Format WA Tugas Upacara disalin!");
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast("Teks berhasil disalin!");
+  });
+}
+
+function showToast(msg, isError = false) {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  toastMsg.textContent = msg;
+  toast.className = `fixed top-16 left-1/2 -translate-x-1/2 z-50 ${isError ? 'bg-rose-900/95' : 'bg-slate-900/95'} text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg transition-all duration-200 opacity-100 flex items-center gap-2 pointer-events-auto`;
+  setTimeout(() => {
+    toast.className = "fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg transition-all duration-200 opacity-0 pointer-events-none flex items-center gap-2";
+  }, 2200);
+}
+
+function renderMemberStats() {
+  const allMembers = [...MEMBERS_CLASS_8, ...MEMBERS_CLASS_7];
+  allMembers.sort((a, b) => (appState.memberDutyCount[b.id] || 0) - (appState.memberDutyCount[a.id] || 0));
+
+  const maxDuty = allMembers[0] ? (appState.memberDutyCount[allMembers[0].id] || 0) : 0;
+  const minDuty = allMembers[allMembers.length - 1] ? (appState.memberDutyCount[allMembers[allMembers.length - 1].id] || 0) : 0;
+
+  const html = `
+    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <span class="text-slate-500 block text-[11px]">Beban Terbanyak</span>
+      <span class="text-sm font-extrabold text-blue-900">${maxDuty} kali</span>
+    </div>
+    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <span class="text-slate-500 block text-[11px]">Beban Tersedikit</span>
+      <span class="text-sm font-extrabold text-emerald-800">${minDuty} kali</span>
+    </div>
+    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <span class="text-slate-500 block text-[11px]">Selisih Rotasi</span>
+      <span class="text-sm font-extrabold text-slate-700">${maxDuty - minDuty} tugas</span>
+    </div>
+    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <span class="text-slate-500 block text-[11px]">Status Rotasi</span>
+      <span class="text-xs font-extrabold text-emerald-700 flex items-center gap-1 mt-0.5">
+        <i class="fa-solid fa-check"></i> Adil Merata
+      </span>
+    </div>
+  `;
+  document.getElementById('statsMemberSummary').innerHTML = html;
+}
+
+function loadLocalState() {
+  try {
+    const raw = localStorage.getItem('osis_duty_app_state');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      appState.dutyHistory = parsed.dutyHistory || {};
+      appState.memberDutyCount = parsed.memberDutyCount || {};
+      appState.lastGuardedDate = parsed.lastGuardedDate || {};
+      appState.htHistory = parsed.htHistory || {};
+    }
+  } catch (e) {}
+}
+
+function saveLocalState() {
+  try {
+    localStorage.setItem('osis_duty_app_state', JSON.stringify({
+      dutyHistory: appState.dutyHistory,
+      memberDutyCount: appState.memberDutyCount,
+      lastGuardedDate: appState.lastGuardedDate,
+      htHistory: appState.htHistory
+    }));
+  } catch (e) {}
+}
+
+async function initCloudSync() {
+  const syncBadge = document.getElementById('cloudStatus');
+  const syncText = document.getElementById('syncText');
+  try {
+    const res = await fetch(SYNC_URL);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.data) {
+        appState.dutyHistory = { ...appState.dutyHistory, ...(data.data.dutyHistory || {}) };
+        appState.memberDutyCount = { ...appState.memberDutyCount, ...(data.data.memberDutyCount || {}) };
+        appState.lastGuardedDate = { ...appState.lastGuardedDate, ...(data.data.lastGuardedDate || {}) };
+        appState.htHistory = { ...appState.htHistory, ...(data.data.htHistory || {}) };
+        saveLocalState();
+        renderExistingSchedule(document.getElementById('dutyDate').value);
+      }
+      syncText.textContent = "Online";
+      syncBadge.className = "flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-blue-800 text-blue-200 border border-blue-700";
+    }
+  } catch (err) {
+    syncText.textContent = "Offline (Lokal)";
+    syncBadge.className = "flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700";
+  }
+}
+
+async function syncToCloud() {
+  try {
+    await fetch(SYNC_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: "OSIS_DUTY_ROTATION_SYNC",
+        data: {
+          dutyHistory: appState.dutyHistory,
+          memberDutyCount: appState.memberDutyCount,
+          lastGuardedDate: appState.lastGuardedDate,
+          htHistory: appState.htHistory
+        }
+      })
+    });
+  } catch (e) {}
+}
+</script>
+</body>
+</html>
